@@ -1,6 +1,6 @@
 import pytest
 
-from app.exceptions import CepInvalido, CepNaoEncontrado
+from app.exceptions import CepInvalido, CepNaoEncontrado, ViaCepIndisponivel
 from app.models.consulta import StatusConsulta
 from app.services.consulta_service import ConsultaService
 from tests.fakes import FakeConsultaRepository, FakeViaCepClient
@@ -88,3 +88,20 @@ def test_cep_inexistente_grava_consulta_com_status_nao_encontrado_e_sem_endereco
     assert gravada.cidade is None
     assert gravada.status == StatusConsulta.NAO_ENCONTRADO
     assert gravada.consultado_em is not None
+
+
+def test_viacep_indisponivel_levanta_erro_para_o_chamador(service, client):
+    client.erro = ViaCepIndisponivel()
+
+    with pytest.raises(ViaCepIndisponivel):
+        service.consultar("59000000")
+
+
+def test_viacep_indisponivel_nao_grava_no_historico(service, client, repository):
+    client.erro = ViaCepIndisponivel()
+
+    with pytest.raises(ViaCepIndisponivel):
+        service.consultar("59000000")
+
+    assert client.ceps_consultados == ["59000000"]
+    assert repository.salvos == []
