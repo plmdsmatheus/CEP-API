@@ -17,3 +17,8 @@ class CepInvalido(ErroDeNegocio):
 class CepNaoEncontrado(ErroDeNegocio):
     code = "CEP_NAO_ENCONTRADO"
     message = "CEP não encontrado. Confira os números digitados e tente novamente."
+
+
+class ViaCepIndisponivel(ErroDeNegocio):
+    code = "VIACEP_INDISPONIVEL"
+    message = "O serviço de consulta de CEP está indisponível no momento. Tente novamente em instantes."
