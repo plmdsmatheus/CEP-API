@@ -2,8 +2,17 @@ import re
 
 from app.exceptions import CepInvalido
 
-# 8 dígitos, com hífen opcional depois do quinto (ex.: 59000000 ou 59000-000).
-_CEP_REGEX = re.compile(r"^\d{5}-?\d{3}$")
+# Espaços, pontos e hífens são só formatação; qualquer outro caractere invalida o CEP.
+_SEPARADORES = re.compile(r"[\s.\-]")
+_CEP_REGEX = re.compile(r"\d{8}")
+
+
+def normalizar_cep(cep: str) -> str:
+    """Remove separadores e devolve os 8 dígitos do CEP, ou levanta CepInvalido."""
+    somente_digitos = _SEPARADORES.sub("", cep)
+    if not _CEP_REGEX.fullmatch(somente_digitos):
+        raise CepInvalido()
+    return somente_digitos
 
 
 class ConsultaService:
@@ -12,5 +21,4 @@ class ConsultaService:
         self._repository = repository
 
     def consultar(self, cep: str):
-        if not _CEP_REGEX.fullmatch(cep):
-            raise CepInvalido()
+        normalizar_cep(cep)
