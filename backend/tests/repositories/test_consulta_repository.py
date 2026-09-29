@@ -78,3 +78,58 @@ def test_listar_respeita_limit_e_offset(repository):
     pagina = repository.listar(limit=2, offset=1)
 
     assert [c.cep for c in pagina] == ["00000004", "00000003"]
+
+
+def _inexistente(cep: str) -> Consulta:
+    return Consulta(cep=cep, status=StatusConsulta.NAO_ENCONTRADO)
+
+
+def _salvar_historico_misto(repository: ConsultaRepository) -> None:
+    repository.salvar(_encontrada("11111111"))
+    repository.salvar(_inexistente("22222222"))
+    repository.salvar(_encontrada("33333333"))
+
+
+def test_listar_filtra_por_status(repository):
+    _salvar_historico_misto(repository)
+
+    encontradas = repository.listar(status=StatusConsulta.ENCONTRADO)
+    inexistentes = repository.listar(status=StatusConsulta.NAO_ENCONTRADO)
+
+    assert [c.cep for c in encontradas] == ["33333333", "11111111"]
+    assert [c.cep for c in inexistentes] == ["22222222"]
+
+
+def test_listar_com_filtro_tambem_respeita_limit_e_offset(repository):
+    _salvar_historico_misto(repository)
+
+    pagina = repository.listar(status=StatusConsulta.ENCONTRADO, limit=1, offset=1)
+
+    assert [c.cep for c in pagina] == ["11111111"]
+
+
+def test_contar_sem_filtro_conta_todas_as_consultas(repository):
+    _salvar_historico_misto(repository)
+
+    assert repository.contar() == 3
+
+
+def test_contar_com_filtro_conta_so_o_status_pedido(repository):
+    _salvar_historico_misto(repository)
+
+    assert repository.contar(status=StatusConsulta.ENCONTRADO) == 2
+    assert repository.contar(status=StatusConsulta.NAO_ENCONTRADO) == 1
+
+
+def test_contar_por_status_devolve_todos_os_status_inclusive_os_zerados(repository):
+    assert repository.contar_por_status() == {
+        StatusConsulta.ENCONTRADO: 0,
+        StatusConsulta.NAO_ENCONTRADO: 0,
+    }
+
+    _salvar_historico_misto(repository)
+
+    assert repository.contar_por_status() == {
+        StatusConsulta.ENCONTRADO: 2,
+        StatusConsulta.NAO_ENCONTRADO: 1,
+    }

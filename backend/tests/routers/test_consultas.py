@@ -101,45 +101,91 @@ def test_post_corpo_invalido_devolve_422_no_mesmo_formato_de_erro(api, corpo):
 # --- GET /api/consultas ----------------------------------------------------------------
 
 
-def test_get_historico_vazio_devolve_lista_vazia(api):
-    resposta = api.get("/api/consultas")
-
-    assert resposta.status_code == 200
-    assert resposta.json() == []
-
-
-def test_get_historico_devolve_da_mais_recente_para_a_mais_antiga_com_status(api, viacep):
+def _registrar_historico_misto(api, viacep) -> None:
+    """Histórico com 2 encontrados (11111111, 33333333) e 1 inexistente (22222222)."""
     api.post("/api/consultas", json={"cep": "11111111"})
     viacep.erro = CepNaoEncontrado()
     api.post("/api/consultas", json={"cep": "22222222"})
+    viacep.erro = None
+    api.post("/api/consultas", json={"cep": "33333333"})
+
+
+def test_get_historico_vazio_devolve_envelope_zerado(api):
+    resposta = api.get("/api/consultas")
+
+    assert resposta.status_code == 200
+    assert resposta.json() == {
+        "items": [],
+        "total": 0,
+        "limit": 50,
+        "offset": 0,
+        "resumo": {"total": 0, "encontrados": 0, "naoEncontrados": 0},
+    }
+
+
+def test_get_historico_devolve_itens_da_mais_recente_para_a_mais_antiga_com_status(api, viacep):
+    _registrar_historico_misto(api, viacep)
 
     resposta = api.get("/api/consultas")
 
     assert resposta.status_code == 200
-    historico = resposta.json()
-    assert [(c["cep"], c["status"]) for c in historico] == [
+    corpo = resposta.json()
+    assert set(corpo) == {"items", "total", "limit", "offset", "resumo"}
+    itens = corpo["items"]
+    assert [(c["cep"], c["status"]) for c in itens] == [
+        ("33333333", "encontrado"),
         ("22222222", "nao_encontrado"),
         ("11111111", "encontrado"),
     ]
-    assert set(historico[0]) == {"id", "cep", "logradouro", "bairro", "cidade", "status", "dataConsulta"}
-    assert historico[0]["logradouro"] is None
-    assert historico[1]["cidade"] == "Natal"
+    assert set(itens[0]) == {"id", "cep", "logradouro", "bairro", "cidade", "status", "dataConsulta"}
+    assert itens[1]["logradouro"] is None
+    assert itens[0]["cidade"] == "Natal"
 
 
-def test_get_historico_respeita_limit_e_offset(api):
-    for cep in ("11111111", "22222222", "33333333"):
-        api.post("/api/consultas", json={"cep": cep})
+def test_get_historico_traz_resumo_com_totais_por_status(api, viacep):
+    _registrar_historico_misto(api, viacep)
 
-    resposta = api.get("/api/consultas", params={"limit": 2, "offset": 1})
+    corpo = api.get("/api/consultas").json()
 
-    assert [c["cep"] for c in resposta.json()] == ["22222222", "11111111"]
+    assert corpo["total"] == 3
+    assert corpo["resumo"] == {"total": 3, "encontrados": 2, "naoEncontrados": 1}
+
+
+def test_get_historico_respeita_limit_e_offset_e_devolve_o_total_completo(api, viacep):
+    _registrar_historico_misto(api, viacep)
+
+    corpo = api.get("/api/consultas", params={"limit": 2, "offset": 1}).json()
+
+    assert [c["cep"] for c in corpo["items"]] == ["22222222", "11111111"]
+    assert corpo["limit"] == 2
+    assert corpo["offset"] == 1
+    assert corpo["total"] == 3
+
+
+def test_get_historico_filtra_por_status_e_mantem_o_resumo_global(api, viacep):
+    _registrar_historico_misto(api, viacep)
+
+    corpo = api.get("/api/consultas", params={"status": "encontrado"}).json()
+
+    assert [c["cep"] for c in corpo["items"]] == ["33333333", "11111111"]
+    assert corpo["total"] == 2
+    assert corpo["resumo"] == {"total": 3, "encontrados": 2, "naoEncontrados": 1}
+
+
+def test_get_historico_filtrado_por_nao_encontrado(api, viacep):
+    _registrar_historico_misto(api, viacep)
+
+    corpo = api.get("/api/consultas", params={"status": "nao_encontrado"}).json()
+
+    assert [c["cep"] for c in corpo["items"]] == ["22222222"]
+    assert corpo["total"] == 1
 
 
 @pytest.mark.parametrize(
     "params",
-    [{"limit": 0}, {"limit": 101}, {"offset": -1}, {"limit": "abc"}],
+    [{"limit": 0}, {"limit": 101}, {"offset": -1}, {"limit": "abc"}, {"status": "invalido"}],
 )
-def test_get_historico_com_paginacao_invalida_devolve_422(api, params):
+def test_get_historico_com_parametros_invalidos_devolve_422(api, params):
     resposta = api.get("/api/consultas", params=params)
 
     assert resposta.status_code == 422

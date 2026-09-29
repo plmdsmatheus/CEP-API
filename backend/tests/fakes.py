@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 
 from app.clients.viacep import Endereco
-from app.models.consulta import Consulta
+from app.models.consulta import Consulta, StatusConsulta
 
 
 class FakeViaCepClient:
@@ -33,6 +33,17 @@ class FakeConsultaRepository:
         self.salvos.append(consulta)
         return consulta
 
-    def listar(self, limit: int = 50, offset: int = 0) -> list[Consulta]:
+    def listar(
+        self, status: StatusConsulta | None = None, limit: int = 50, offset: int = 0
+    ) -> list[Consulta]:
         """Da mais recente para a mais antiga, como o repository real."""
-        return list(reversed(self.salvos))[offset : offset + limit]
+        return list(reversed(self._filtrar(status)))[offset : offset + limit]
+
+    def contar(self, status: StatusConsulta | None = None) -> int:
+        return len(self._filtrar(status))
+
+    def contar_por_status(self) -> dict[StatusConsulta, int]:
+        return {status: self.contar(status) for status in StatusConsulta}
+
+    def _filtrar(self, status: StatusConsulta | None) -> list[Consulta]:
+        return [c for c in self.salvos if status is None or c.status == status]

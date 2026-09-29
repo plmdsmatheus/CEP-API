@@ -117,10 +117,44 @@ def test_cep_repetido_consulta_o_client_de_novo_e_grava_nova_linha(service, clie
     assert primeira.id != segunda.id
 
 
-def test_listar_devolve_o_historico_paginado_do_repository(service, repository):
-    for cep in ("11111111", "22222222", "33333333"):
-        service.consultar(cep)
+def _registrar_historico_misto(service, client) -> None:
+    """Histórico com 2 encontrados (11111111, 33333333) e 1 inexistente (22222222)."""
+    service.consultar("11111111")
+    client.erro = CepNaoEncontrado()
+    with pytest.raises(CepNaoEncontrado):
+        service.consultar("22222222")
+    client.erro = None
+    service.consultar("33333333")
 
-    pagina = service.listar(limit=2, offset=1)
 
-    assert [c.cep for c in pagina] == ["22222222", "11111111"]
+def test_listar_devolve_pagina_com_total_e_resumo(service, client):
+    _registrar_historico_misto(service, client)
+
+    historico = service.listar(limit=2, offset=0)
+
+    assert [c.cep for c in historico.items] == ["33333333", "22222222"]
+    assert historico.total == 3
+    assert historico.resumo.total == 3
+    assert historico.resumo.encontrados == 2
+    assert historico.resumo.nao_encontrados == 1
+
+
+def test_listar_paginado_mantem_o_total_de_todo_o_historico(service, client):
+    _registrar_historico_misto(service, client)
+
+    historico = service.listar(limit=1, offset=2)
+
+    assert [c.cep for c in historico.items] == ["11111111"]
+    assert historico.total == 3
+
+
+def test_listar_filtrado_tem_total_do_filtro_e_resumo_global(service, client):
+    _registrar_historico_misto(service, client)
+
+    historico = service.listar(status=StatusConsulta.ENCONTRADO, limit=1)
+
+    assert [c.cep for c in historico.items] == ["33333333"]
+    assert historico.total == 2
+    assert historico.resumo.total == 3
+    assert historico.resumo.encontrados == 2
+    assert historico.resumo.nao_encontrados == 1
