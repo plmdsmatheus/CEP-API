@@ -1,4 +1,5 @@
 import re
+from dataclasses import dataclass
 
 from app.exceptions import CepInvalido, CepNaoEncontrado
 from app.models.consulta import Consulta, StatusConsulta
@@ -14,6 +15,22 @@ def normalizar_cep(cep: str) -> str:
     if not _CEP_REGEX.fullmatch(somente_digitos):
         raise CepInvalido()
     return somente_digitos
+
+
+@dataclass(frozen=True)
+class Resumo:
+    """Contagem do histórico inteiro, sem considerar filtro nem paginação."""
+
+    total: int
+    encontrados: int
+    nao_encontrados: int
+
+
+@dataclass(frozen=True)
+class Historico:
+    items: list[Consulta]
+    total: int  # itens que batem com o filtro (base da paginação)
+    resumo: Resumo
 
 
 class ConsultaService:
@@ -37,3 +54,18 @@ class ConsultaService:
             status=StatusConsulta.ENCONTRADO,
         )
         return self._repository.salvar(consulta)
+
+    def listar(
+        self, status: StatusConsulta | None = None, limit: int = 50, offset: int = 0
+    ) -> Historico:
+        por_status = self._repository.contar_por_status()
+        resumo = Resumo(
+            total=sum(por_status.values()),
+            encontrados=por_status[StatusConsulta.ENCONTRADO],
+            nao_encontrados=por_status[StatusConsulta.NAO_ENCONTRADO],
+        )
+        return Historico(
+            items=self._repository.listar(status=status, limit=limit, offset=offset),
+            total=self._repository.contar(status=status),
+            resumo=resumo,
+        )
