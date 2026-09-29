@@ -105,3 +105,13 @@ def test_viacep_indisponivel_nao_grava_no_historico(service, client, repository)
 
     assert client.ceps_consultados == ["59000000"]
     assert repository.salvos == []
+
+
+def test_cep_repetido_consulta_o_client_de_novo_e_grava_nova_linha(service, client, repository):
+    primeira = service.consultar("59000-000")
+    segunda = service.consultar("59000000")
+
+    assert client.ceps_consultados == ["59000000", "59000000"]
+    assert len(repository.salvos) == 2
+    assert primeira is not segunda
+    assert primeira.id != segunda.id
