@@ -16,7 +16,7 @@ interface Situacao {
 }
 
 const SITUACOES: Record<string, Situacao> = {
-  CEP_NAO_ENCONTRADO: { tipo: 'nao-encontrado', titulo: 'CEP não encontrado', icone: MapPinOff },
+  CEP_NAO_ENCONTRADO: { tipo: 'nao-encontrado', titulo: 'CEP inexistente', icone: MapPinOff },
   CEP_INVALIDO: { tipo: 'invalido', titulo: 'CEP inválido', icone: TriangleAlert },
   REQUISICAO_INVALIDA: { tipo: 'invalido', titulo: 'Requisição inválida', icone: TriangleAlert },
   VIACEP_INDISPONIVEL: { tipo: 'indisponivel', titulo: 'Serviço de CEP indisponível', icone: ServerOff },
