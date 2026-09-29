@@ -7,7 +7,7 @@ const montar = (code: string, message = 'Mensagem do servidor.') =>
 
 describe('AlertaConsulta: cada situação tem título, tipo e papel próprios', () => {
   it.each([
-    ['CEP_NAO_ENCONTRADO', 'nao-encontrado', 'status', 'CEP não encontrado'],
+    ['CEP_NAO_ENCONTRADO', 'nao-encontrado', 'status', 'CEP inexistente'],
     ['CEP_INVALIDO', 'invalido', 'status', 'CEP inválido'],
     ['REQUISICAO_INVALIDA', 'invalido', 'status', 'Requisição inválida'],
     ['VIACEP_INDISPONIVEL', 'indisponivel', 'alert', 'Serviço de CEP indisponível'],

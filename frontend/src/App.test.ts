@@ -202,7 +202,8 @@ describe('consultar um CEP', () => {
 
     const aviso = wrapper.get('[data-tipo="nao-encontrado"]')
     expect(aviso.attributes('role')).toBe('status')
-    expect(aviso.text()).toContain('CEP não encontrado')
+    expect(aviso.text()).toContain('CEP inexistente')
+    expect(aviso.text()).toContain(ERRO_NAO_ENCONTRADO.message)
     expect(wrapper.find('[aria-label="Endereço encontrado"]').exists()).toBe(false)
     expect(linhas(wrapper)).toHaveLength(1)
     expect(linhas(wrapper)[0]!.text()).toContain('Não encontrado')
