@@ -5,7 +5,7 @@ const URL_CONSULTAS = '/api/consultas'
 
 const MENSAGEM_REDE =
   'Não foi possível conectar ao servidor. Verifique sua conexão e tente novamente.'
-const MENSAGEM_INESPERADA = 'Ocorreu um erro inesperado. Tente novamente em instantes.'
+export const MENSAGEM_INESPERADA = 'Ocorreu um erro inesperado. Tente novamente em instantes.'
 
 /** Erro da API (`code` e `message` vêm do backend) ou de comunicação com ela. */
 export class ApiError extends Error {
