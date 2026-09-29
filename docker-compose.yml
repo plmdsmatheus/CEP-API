@@ -7,6 +7,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-cep}
     ports:
       # Porta do host configurável para não conflitar com outro Postgres local (5432/5433).
+      # Serve para rodar a API e os testes fora do Docker; entre os containers a porta é 5432.
       - "${POSTGRES_PORT:-5434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -15,6 +16,32 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  api:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-cep}:${POSTGRES_PASSWORD:-cep}@db:5432/${POSTGRES_DB:-cep}
+      VIACEP_BASE_URL: ${VIACEP_BASE_URL:-https://viacep.com.br/ws}
+      VIACEP_TIMEOUT_SECONDS: ${VIACEP_TIMEOUT_SECONDS:-5}
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # A imagem slim não tem curl; o próprio Python faz a checagem.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    # Sem `ports`: a API só é acessada pelo nginx (web), na rede interna do Compose.
+
+  web:
+    build: ./frontend
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
 
 volumes:
   postgres_data:
