@@ -130,7 +130,7 @@ describe('página ao abrir', () => {
     const wrapper = await abrir(criarBackend())
 
     expect(wrapper.get('h1').text()).toBe('Consulta de CEP')
-    expect(wrapper.get('input[name="cep"]').exists()).toBe(true)
+    expect(wrapper.find('input[name="cep"]').exists()).toBe(true)
     expect(wrapper.get('button[type="submit"]').attributes('disabled')).toBeDefined()
   })
 
