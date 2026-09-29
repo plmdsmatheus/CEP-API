@@ -1,5 +1,25 @@
+/*
+  DIREÇÃO VISUAL: GUIA DE RUAS (contrato)
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap');
+  THESIS: a tela é uma prancha de guia de ruas impresso; o CEP é o endereço no índice e o histórico
+  é a lista de ruas já localizadas. Recusa o painel SaaS de cartões cinza iguais.
+  OWN-WORLD: papel de prancha frio, tinta azul-marinho, via arterial amarela com contorno escuro,
+  verde de parque (encontrado), tracejado de "rua projetada" (inexistente), vermelho de restrição (erro).
+  Estado nunca só por cor: forma do traço (sólido/tracejado/duplo) + texto + ícone.
+  STORY: o avaliador informa um CEP, vê o verbete da rua ou um erro/aviso inequívoco e varre o histórico.
+  FIRST VIEWPORT: moldura de quadrantes (régua A-F / 1-4); CEP em condensada grande no campo-legenda; resultado
+  como verbete; régua das 10 regiões postais (0-9) acende o 1º dígito; resumo e histórico abaixo.
+  FORM: Guia de Ruas, sorteio f7838e27 (índice atribuído: 3).
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict,
+  DESIGN.md, and every shipping raster carrying its provenance.
+*/
+
+@import "@fontsource/barlow/latin-400.css";
+@import "@fontsource/barlow/latin-500.css";
+@import "@fontsource/barlow/latin-600.css";
+@import "@fontsource/barlow-condensed/latin-500.css";
+@import "@fontsource/barlow-condensed/latin-600.css";
+@import "@fontsource/barlow-condensed/latin-700.css";
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -7,121 +27,238 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ------------------------------------------------------------------------------------------
+   Tokens → utilitários do Tailwind (bg-sucesso-fundo, text-aviso, border-erro-linha, font-display…)
+   ------------------------------------------------------------------------------------------ */
 @theme inline {
-    --font-sans: 'Geist Variable', sans-serif;
-    --font-heading: var(--font-sans);
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
-    --color-background: var(--background);
-    --radius-sm: calc(var(--radius) - 4px);
-    --radius-md: calc(var(--radius) - 2px);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) + 4px);
+  /* Barlow: rótulos de mapa. Condensada nos títulos e no CEP, normal no corpo. */
+  --font-sans: 'Barlow', system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  --font-heading: var(--font-display);
+
+  /* Escala (corpo 16px; o CEP é o único texto monumental da página) */
+  --text-rotulo: 0.8125rem;
+  --text-rotulo--line-height: 1.2;
+  --text-rotulo--letter-spacing: 0.06em;
+  --text-titulo: 1.5rem;
+  --text-titulo--line-height: 1.1;
+  --text-cep: clamp(2.75rem, 9vw, 4.5rem);
+  --text-cep--line-height: 1;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-via-contorno: var(--via-contorno);
+
+  /* Estados de domínio (cada um: texto, fundo, linha) */
+  --color-sucesso: var(--sucesso);
+  --color-sucesso-fundo: var(--sucesso-fundo);
+  --color-sucesso-linha: var(--sucesso-linha);
+  --color-aviso: var(--aviso);
+  --color-aviso-fundo: var(--aviso-fundo);
+  --color-aviso-linha: var(--aviso-linha);
+  --color-erro: var(--erro);
+  --color-erro-fundo: var(--erro-fundo);
+  --color-erro-linha: var(--erro-linha);
+  --color-info: var(--info);
+  --color-info-fundo: var(--info-fundo);
+
+  /* Guia: cantos quase retos; a prancha é impressa, não "macia" */
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ------------------------------------------------------------------------------------------
+   Modo claro: prancha de dia (avaliador em escritório, tela clara, leitura de vários minutos)
+   Contrastes verificados (WCAG): texto ≥ 4.5:1, bordas de controle e linhas de estado ≥ 3:1.
+   ------------------------------------------------------------------------------------------ */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
+  color-scheme: light;
+
+  --background: oklch(0.965 0.006 250); /* papel de prancha frio */
+  --foreground: oklch(0.24 0.03 255); /* tinta azul-marinho */
+  --card: oklch(0.99 0.003 250); /* quadro/legenda sobre a prancha */
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.86 0.16 92); /* via arterial amarela */
+  --primary-foreground: var(--foreground);
+  --via-contorno: oklch(0.5 0.1 85); /* contorno da via (borda de controle) */
+  --secondary: oklch(0.93 0.03 240); /* água */
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.94 0.008 250);
+  --muted-foreground: oklch(0.46 0.03 255);
+  --accent: oklch(0.93 0.025 240);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.5 0.17 27);
+
+  --border: oklch(0.85 0.012 250); /* filete da grade (decorativo) */
+  --input: oklch(0.58 0.03 255); /* borda de campo (≥3:1) */
+  --ring: oklch(0.5 0.17 255); /* rota destacada: anel de foco azul */
+
+  --sucesso: oklch(0.4 0.09 152); /* parque: CEP encontrado */
+  --sucesso-fundo: oklch(0.94 0.05 152);
+  --sucesso-linha: oklch(0.5 0.1 152);
+  --aviso: oklch(0.4 0.08 80); /* rua projetada: CEP inexistente / formato incompleto */
+  --aviso-fundo: oklch(0.955 0.06 95);
+  --aviso-linha: oklch(0.5 0.1 80);
+  --erro: oklch(0.45 0.16 27); /* via interditada: serviço fora / rede */
+  --erro-fundo: oklch(0.95 0.03 27);
+  --erro-linha: oklch(0.5 0.17 27);
+  --info: oklch(0.38 0.09 245);
+  --info-fundo: oklch(0.93 0.04 235);
+
+  --radius: 0.25rem;
+  --grade-passo: 2.5rem; /* distância entre marcas da régua de quadrantes */
+  --sombra-prancha: 0 1px 0 oklch(0.24 0.03 255 / 0.06), 0 10px 24px -14px oklch(0.24 0.03 255 / 0.28);
 }
 
+/* Modo escuro: prancha noturna (mesma paleta de via/parque/água sobre marinho profundo) */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+  color-scheme: dark;
+
+  --background: oklch(0.19 0.025 255);
+  --foreground: oklch(0.94 0.01 250);
+  --card: oklch(0.235 0.03 255);
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+
+  --primary: oklch(0.85 0.16 92);
+  --primary-foreground: oklch(0.19 0.025 255); /* tinta escura sobre a via amarela */
+  --via-contorno: oklch(0.66 0.12 88);
+  --secondary: oklch(0.3 0.05 245);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.27 0.03 255);
+  --muted-foreground: oklch(0.74 0.02 250);
+  --accent: oklch(0.31 0.045 245);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.7 0.15 27);
+
+  --border: oklch(0.34 0.03 255);
+  --input: oklch(0.6 0.03 255);
+  --ring: oklch(0.75 0.13 250);
+
+  --sucesso: oklch(0.85 0.12 152);
+  --sucesso-fundo: oklch(0.3 0.05 152);
+  --sucesso-linha: oklch(0.65 0.11 152);
+  --aviso: oklch(0.87 0.11 90);
+  --aviso-fundo: oklch(0.32 0.05 85);
+  --aviso-linha: oklch(0.7 0.11 85);
+  --erro: oklch(0.85 0.11 27);
+  --erro-fundo: oklch(0.31 0.06 27);
+  --erro-linha: oklch(0.7 0.15 27);
+  --info: oklch(0.85 0.08 240);
+  --info-fundo: oklch(0.3 0.05 240);
+
+  --sombra-prancha: 0 1px 0 oklch(0 0 0 / 0.3), 0 10px 24px -14px oklch(0 0 0 / 0.6);
 }
 
+/* ------------------------------------------------------------------------------------------
+   Base: também veste o que o navegador desenha (seleção, cursor, rolagem, foco, numerais)
+   ------------------------------------------------------------------------------------------ */
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    }
+  }
+
+  html {
+    scrollbar-color: var(--input) var(--background);
+  }
+
   body {
-    @apply bg-background text-foreground;
-    @apply font-sans;
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: 'kern', 'liga';
+  }
+
+  h1, h2, h3 {
+    @apply font-display text-balance;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  input {
+    caret-color: var(--ring);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* CEP, datas e contagens: algarismos de largura fixa, para as colunas alinharem */
+  table, .numerais {
+    font-variant-numeric: tabular-nums;
+  }
+
+  a {
+    text-underline-offset: 0.2em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
     }
+  }
+}
+
+/* ------------------------------------------------------------------------------------------
+   Dispositivos do mundo "guia de ruas" (usados pelos componentes; nada aqui é decoração solta)
+   ------------------------------------------------------------------------------------------ */
+
+/* Via arterial: preenchimento amarelo com contorno escuro (botão primário, filtro ativo). */
+@utility traco-via {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+  border: 2px solid var(--via-contorno);
+}
+
+/* Rua projetada: contorno tracejado. Marca CEP inexistente e qualquer coisa "ainda não localizada". */
+@utility traco-projetado {
+  border: 2px dashed var(--aviso-linha);
+}
+
+/* Quadro/legenda: superfície da prancha com filete e sombra de papel (offset + blur suave). */
+@utility quadro {
+  background-color: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  box-shadow: var(--sombra-prancha);
+}
+
+/* Réguas de quadrantes: marcas de 1px repetidas a cada --grade-passo (moldura da prancha). */
+@utility regua-horizontal {
+  height: 0.5rem;
+  background-image: repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px var(--grade-passo));
+}
+
+@utility regua-vertical {
+  width: 0.5rem;
+  background-image: repeating-linear-gradient(180deg, var(--border) 0 1px, transparent 1px var(--grade-passo));
 }
