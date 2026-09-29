@@ -12,6 +12,8 @@ Registro do uso de IA neste projeto, conforme pedido no desafio técnico. Atuali
 |---|---|
 | Configuração do repositório | Ajuste do `.gitignore` para excluir o `.docx` do enunciado e arquivos de ambiente/dependências. |
 | Leitura do enunciado | Leitura do `.docx` do desafio e resumo dos requisitos. |
+| Backend base (etapa 2) | Instalação do Poetry (o existente estava quebrado), criação do `pyproject.toml`, das dependências, de `config.py`, `db/session.py`, `db/base.py` e de `main.py` com `/health` e CORS. |
+| TDD | Escrita dos testes (fase red) antes da implementação, começando pelo service; a implementação (green) vem em seguida. |
 | Planejamento | Geração do plano de desenvolvimento (estrutura de pastas, regras de negócio, etapas de commit, verificação) a partir da arquitetura definida por mim. |
 
 ## 3. Exemplos de prompts utilizados
@@ -26,6 +28,7 @@ A preencher.
 ## 5. Sugestões da IA aproveitadas
 
 - Estrutura de pastas em camadas (`routers`, `services`, `clients`, `repositories`, `models`, `schemas`) seguindo a arquitetura que defini.
+- Dependências e configuração do backend: `pydantic-settings` para ler `.env`, SQLAlchemy 2 síncrono com `psycopg` 3 e sessão por requisição via `Depends`.
 - Padronização do corpo de erro da API (`code` + `message`) para o front tratar CEP inválido, inexistente e serviço indisponível do mesmo jeito.
 
 ## 6. Sugestões da IA descartadas
@@ -35,4 +38,6 @@ A preencher.
 ## 7. Desenvolvido ou ajustado manualmente
 
 - Definição da arquitetura (Vue.js → FastAPI → Service → ViaCEP Client / Repository → PostgreSQL) e da stack (Poetry, SQLAlchemy 2, Alembic, Vue 3, Vite, TypeScript, Tailwind, Docker).
+- Decisão de usar TDD (de dentro para fora, começando pelo service), com commits separados `Test:` (red) e `Feat:` (green) e Postgres via Docker Compose nos testes de integração.
+- Escolha do Python 3.14 e decisão de que, se o ViaCEP estiver fora do ar, a API retorna 502 com mensagem clara e não grava no histórico.
 - Definição das regras de negócio: CEP inválido não é gravado; CEP inexistente é gravado; CEP repetido consulta o ViaCEP de novo e grava nova linha.
