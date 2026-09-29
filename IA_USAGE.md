@@ -15,6 +15,7 @@ Registro do uso de IA neste projeto, conforme pedido no desafio técnico. Atuali
 | Planejamento | Geração do plano de desenvolvimento (estrutura de pastas, regras de negócio, etapas de commit, verificação) a partir da arquitetura definida por mim. |
 | Backend base (etapa 2) | Instalação do Poetry (o existente estava quebrado), criação do `pyproject.toml`, das dependências, de `config.py`, `db/session.py`, `db/base.py` e de `main.py` com `/health` e CORS. |
 | Regras de negócio do service (TDD) | Escrita dos testes (red) e da implementação mínima (green) de cada regra do `ConsultaService`, um ciclo por vez: validação e normalização do CEP, CEP encontrado, CEP inexistente, ViaCEP indisponível e CEP repetido. Resultado: 22 testes unitários, com dublês de client e repository (`tests/fakes.py`). |
+| Repository e Postgres (TDD) | Criação do `docker-compose.yml` com o `db`, configuração do Alembic e da migration inicial, fixtures de teste em `tests/conftest.py` (banco `cep_test`, migrations reais e rollback por teste) e o ciclo red/green do `ConsultaRepository` (7 testes de integração no Postgres). |
 
 ## 3. Exemplos de prompts utilizados
 
@@ -36,6 +37,8 @@ Registro do uso de IA neste projeto, conforme pedido no desafio técnico. Atuali
 - Exceções de negócio (`CepInvalido`, `CepNaoEncontrado`, `ViaCepIndisponivel`) com código estável e mensagem clara, herdando de uma base comum.
 - Normalização do CEP no service removendo só espaços, pontos e hífens; letras continuam tornando o CEP inválido.
 - Status da consulta guardado como texto no banco (sem tipo enum nativo do Postgres), para simplificar as migrations.
+- Porta 5434 para o Postgres do Compose, porque a IA identificou que a 5432 e a 5433 já estavam em uso na máquina.
+- Sessão de teste com rollback por teste (transação externa + savepoint), para os testes de integração não interferirem entre si.
 - Teste de caracterização para o CEP repetido: ele passou de primeira, por proteger uma regra que já era verdadeira (sem cache).
 
 ## 6. Sugestões da IA descartadas
@@ -52,3 +55,4 @@ Registro do uso de IA neste projeto, conforme pedido no desafio técnico. Atuali
 - Definição das regras de negócio: CEP inválido não é gravado; CEP inexistente é gravado; CEP repetido consulta o ViaCEP de novo e grava nova linha.
 - Decisão sobre o formato do CEP: aceitar espaços, pontos e hífens como separadores.
 - Revisão e Refatoração de cada Red (testes) e Greens (Implementações) que estavam foram do padrão 
+- Desempate por `id` na listagem do histórico, porque o `now()` do Postgres é igual para todas as linhas de uma mesma transação.
