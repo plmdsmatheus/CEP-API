@@ -40,13 +40,17 @@ const cepInvalido = computed(
 onMounted(carregar)
 
 const COLUNAS = ['A', 'B', 'C', 'D', 'E', 'F']
+const LINHAS = ['1', '2', '3', '4']
 </script>
 
 <template>
   <div class="mx-auto flex min-h-screen max-w-5xl gap-3 px-4 py-6 sm:px-6 sm:py-10">
     <!-- Moldura de quadrantes da prancha: régua vertical. Decorativa. -->
-    <div aria-hidden="true" class="hidden shrink-0 pt-8 sm:block">
-      <div class="regua-vertical h-full" />
+    <div aria-hidden="true" class="relative hidden shrink-0 pt-8 sm:block">
+      <div class="regua-vertical ml-auto h-full" />
+      <div class="font-display text-muted-foreground absolute inset-y-8 right-3 flex flex-col justify-around text-sm font-semibold">
+        <span v-for="linha in LINHAS" :key="linha">{{ linha }}</span>
+      </div>
     </div>
 
     <div class="flex min-w-0 flex-1 flex-col gap-3">
