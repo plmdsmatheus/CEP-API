@@ -94,11 +94,16 @@ describe('botão Consultar', () => {
 
 describe('envio do formulário', () => {
   it('clicar no botão habilitado emite "consultar" uma vez', async () => {
-    const wrapper = montar({ modelValue: '59000-000', podeConsultar: true })
+    // O jsdom só envia formulários que estão no documento (como o navegador de verdade).
+    const wrapper = mount(ConsultaForm, {
+      props: { modelValue: '59000-000', podeConsultar: true, carregando: false },
+      attachTo: document.body,
+    })
 
     await wrapper.get('button').trigger('click')
 
     expect(wrapper.emitted('consultar')).toHaveLength(1)
+    wrapper.unmount()
   })
 
   it('enviar o formulário (Enter no campo) emite "consultar"', async () => {
