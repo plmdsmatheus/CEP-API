@@ -115,3 +115,12 @@ def test_cep_repetido_consulta_o_client_de_novo_e_grava_nova_linha(service, clie
     assert len(repository.salvos) == 2
     assert primeira is not segunda
     assert primeira.id != segunda.id
+
+
+def test_listar_devolve_o_historico_paginado_do_repository(service, repository):
+    for cep in ("11111111", "22222222", "33333333"):
+        service.consultar(cep)
+
+    pagina = service.listar(limit=2, offset=1)
+
+    assert [c.cep for c in pagina] == ["22222222", "11111111"]

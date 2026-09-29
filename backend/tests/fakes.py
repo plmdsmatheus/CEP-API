@@ -32,3 +32,7 @@ class FakeConsultaRepository:
         consulta.consultado_em = datetime.now(UTC)
         self.salvos.append(consulta)
         return consulta
+
+    def listar(self, limit: int = 50, offset: int = 0) -> list[Consulta]:
+        """Da mais recente para a mais antiga, como o repository real."""
+        return list(reversed(self.salvos))[offset : offset + limit]
