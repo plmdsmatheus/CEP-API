@@ -9,6 +9,7 @@ from app.db.base import Base
 
 class StatusConsulta(enum.StrEnum):
     ENCONTRADO = "encontrado"
+    NAO_ENCONTRADO = "nao_encontrado"
 
 
 class Consulta(Base):

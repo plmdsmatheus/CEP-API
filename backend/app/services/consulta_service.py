@@ -1,6 +1,6 @@
 import re
 
-from app.exceptions import CepInvalido
+from app.exceptions import CepInvalido, CepNaoEncontrado
 from app.models.consulta import Consulta, StatusConsulta
 
 # Espaços, pontos e hífens são só formatação; qualquer outro caractere invalida o CEP.
@@ -23,7 +23,12 @@ class ConsultaService:
 
     def consultar(self, cep: str) -> Consulta:
         cep_normalizado = normalizar_cep(cep)
-        endereco = self._client.buscar(cep_normalizado)
+        try:
+            endereco = self._client.buscar(cep_normalizado)
+        except CepNaoEncontrado:
+            # CEP inexistente também entra no histórico; o erro segue para o chamador.
+            self._repository.salvar(Consulta(cep=cep_normalizado, status=StatusConsulta.NAO_ENCONTRADO))
+            raise
         consulta = Consulta(
             cep=cep_normalizado,
             logradouro=endereco.logradouro,

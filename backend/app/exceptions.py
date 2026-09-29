@@ -12,3 +12,8 @@ class ErroDeNegocio(Exception):
 class CepInvalido(ErroDeNegocio):
     code = "CEP_INVALIDO"
     message = "CEP inválido. Informe 8 dígitos, com ou sem hífen (ex.: 59000-000)."
+
+
+class CepNaoEncontrado(ErroDeNegocio):
+    code = "CEP_NAO_ENCONTRADO"
+    message = "CEP não encontrado. Confira os números digitados e tente novamente."
