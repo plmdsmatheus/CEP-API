@@ -7,14 +7,17 @@ from app.models.consulta import Consulta
 
 
 class FakeViaCepClient:
-    """Devolve sempre o mesmo endereço e registra os CEPs recebidos."""
+    """Devolve sempre o mesmo endereço (ou levanta `erro`, se definido) e registra os CEPs recebidos."""
 
     def __init__(self) -> None:
         self.ceps_consultados: list[str] = []
         self.endereco = Endereco(logradouro="Rua Teste", bairro="Centro", cidade="Natal")
+        self.erro: Exception | None = None
 
     def buscar(self, cep: str) -> Endereco:
         self.ceps_consultados.append(cep)
+        if self.erro is not None:
+            raise self.erro
         return self.endereco
 
 
