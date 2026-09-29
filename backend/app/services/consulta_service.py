@@ -1,6 +1,7 @@
 import re
 
 from app.exceptions import CepInvalido
+from app.models.consulta import Consulta, StatusConsulta
 
 # Espaços, pontos e hífens são só formatação; qualquer outro caractere invalida o CEP.
 _SEPARADORES = re.compile(r"[\s.\-]")
@@ -20,5 +21,14 @@ class ConsultaService:
         self._client = client
         self._repository = repository
 
-    def consultar(self, cep: str):
-        normalizar_cep(cep)
+    def consultar(self, cep: str) -> Consulta:
+        cep_normalizado = normalizar_cep(cep)
+        endereco = self._client.buscar(cep_normalizado)
+        consulta = Consulta(
+            cep=cep_normalizado,
+            logradouro=endereco.logradouro,
+            bairro=endereco.bairro,
+            cidade=endereco.cidade,
+            status=StatusConsulta.ENCONTRADO,
+        )
+        return self._repository.salvar(consulta)
